@@ -1,14 +1,12 @@
 FROM ubuntu:14.04
 
-MAINTAINER Ryuichi YAMAMOTO <zryuichi@gmail.com>
+LABEL maintainer "jeremybyu@gmail.com"
 
-COPY Make.user /tmp/
-COPY jitlayers.patch /tmp/
+ARG DEBIAN_FRONTEND=noninteractive
 
-ENV LLVM_VERSION 3.8.1
-ENV JULIA_VERSION d0e7684dd0ce867e1add2b88bb91f1c4574100e0
-ENV CXX_VERSION 3f99d56476054241d3c00f331d6377284773367f
+ENV JULIA_DOWNLOAD_URL https://julialang.s3.amazonaws.com/bin/linux/x64/0.5/julia-0.5.2-linux-x86_64.tar.gz
 ENV PATH /julia/usr/bin:$PATH
+ENV CXX_VERSION fe0827de1cc63ba6deb352bb292d3b2394b11c60
 
 RUN apt-get update && \
     apt-get install -y software-properties-common python-software-properties && \
@@ -43,22 +41,11 @@ RUN apt-get update && \
     python-dev && \
     apt-get clean
 
-RUN git clone https://github.com/JuliaLang/julia.git /julia && \
-    cd /julia && \
-    git checkout $JULIA_VERSION && \
-    patch -p0 < /tmp/jitlayers.patch && \
-    cp /tmp/Make.user Make.user && \
-    cat Make.user && \
-    MARCH=x86-64 make USE_SYSTEM_ARPACK=1 USE_SYSTEM_BLAS=1 USE_SYSTEM_LAPACK=1 \
-    USE_SYSTEM_GMP=1 USE_SYSTEM_MPFR=1 -j2 && \
-    rm -rf /julia/usr-staging && \
-    mkdir -p /tmp/srccache && \
-    mv /julia/deps/srccache/llvm-$LLVM_VERSION /tmp/srccache/ && \
-    mv /julia/deps/Versions.make /tmp/ && \
-    rm -rf /julia/deps && \
-    mkdir -p /julia/deps/srccache && \
-    mv /tmp/srccache/llvm-$LLVM_VERSION /julia/deps/srccache/ && \
-    mv /tmp/Versions.make /julia/deps/
+RUN mkdir -p /julia/usr && \
+    wget -O /julia/julia.tar.gz $JULIA_DOWNLOAD_URL && \
+    tar -xvzf /julia/julia.tar.gz -C /julia/usr/ --strip-components 1 && \
+    rm /julia/julia.tar.gz
+
 
 RUN /julia/usr/bin/julia -e 'Pkg.clone("https://github.com/r9y9/Cxx.jl")' && \
     cd `/julia/usr/bin/julia -e 'print(Pkg.dir("Cxx"))'` && \

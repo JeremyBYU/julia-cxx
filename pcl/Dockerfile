@@ -1,6 +1,8 @@
-FROM r9y9/julia-cxx:ubuntu14.04
+FROM jeremybyu/julia-cxx:ubuntu14.04
 
-MAINTAINER Ryuichi YAMAMOTO <zryuichi@gmail.com>
+ARG DEBIAN_FRONTEND=noninteractive
+
+LABEL maintainer "jeremybyu@gmail.com"
 
 RUN apt-get update && \
     apt-get install -y \
